@@ -4,6 +4,7 @@
   Krótki opis:
   Program pokazuje tworzenie procesu potomnego przy pomocy fork(),
   rozróżnianie wykonania w rodzicu i dziecku, przekazywanie kodu zakończenia
+
   z dziecka do rodzica oraz użycie waitpid() do odczytu statusu.
 
   Kompilacja:
@@ -50,59 +51,59 @@
 
 int main(void)
 {
-    pid_t pid;
-    int counter = 0;
+  pid_t pid;
+  int counter = 0;
 
-    printf("Przed fork(): pid=%d, ppid=%d, counter=%d\n", (int)getpid(), (int)getppid(), counter);
+  printf("Przed fork(): pid=%d, ppid=%d, counter=%d\n", (int)getpid(), (int)getppid(), counter);
 
-    pid = fork();
-    if (pid < 0)
+  pid = fork();
+  if (pid < 0)
+  {
+    perror("fork failed");
+    return 1;
+  }
+
+  if (pid == 0)
+  {
+    // Kod wykonywany przez proces potomny
+    counter += 10;
+    printf("[Dziecko]  pid=%d, ppid=%d, fork() zwrocilo %d, counter=%d\n",
+           (int)getpid(), (int)getppid(), (int)pid, counter);
+    // Możemy zwrócić specyficzny kod wyjścia, żeby rodzic mógł go odczytać
+    exit(7);
+  }
+  else
+  {
+    // Kod wykonywany przez proces rodzica
+    counter += 1;
+    printf("[Rodzic]   pid=%d, ppid=%d, fork() zwrocilo %d (PID dziecka), counter=%d\n",
+           (int)getpid(), (int)getppid(), (int)pid, counter);
+
+    // Czekamy na zakończenie potomka i odczytujemy status
+    int status;
+    pid_t w = waitpid(pid, &status, 0);
+    if (w == -1)
     {
-        perror("fork failed");
-        return 1;
+      perror("waitpid failed");
+      return 1;
     }
 
-    if (pid == 0)
+    if (WIFEXITED(status))
     {
-        // Kod wykonywany przez proces potomny
-        counter += 10;
-        printf("[Dziecko]  pid=%d, ppid=%d, fork() zwrocilo %d, counter=%d\n",
-               (int)getpid(), (int)getppid(), (int)pid, counter);
-        // Możemy zwrócić specyficzny kod wyjścia, żeby rodzic mógł go odczytać
-        exit(7);
+      printf("[Rodzic]   Potomek %d zakonczyl sie z kodem %d\n", (int)w, WEXITSTATUS(status));
+    }
+    else if (WIFSIGNALED(status))
+    {
+      printf("[Rodzic]   Potomek %d zostal zabity sygnalem %d\n", (int)w, WTERMSIG(status));
     }
     else
     {
-        // Kod wykonywany przez proces rodzica
-        counter += 1;
-        printf("[Rodzic]   pid=%d, ppid=%d, fork() zwrocilo %d (PID dziecka), counter=%d\n",
-               (int)getpid(), (int)getppid(), (int)pid, counter);
-
-        // Czekamy na zakończenie potomka i odczytujemy status
-        int status;
-        pid_t w = waitpid(pid, &status, 0);
-        if (w == -1)
-        {
-            perror("waitpid failed");
-            return 1;
-        }
-
-        if (WIFEXITED(status))
-        {
-            printf("[Rodzic]   Potomek %d zakonczyl sie z kodem %d\n", (int)w, WEXITSTATUS(status));
-        }
-        else if (WIFSIGNALED(status))
-        {
-            printf("[Rodzic]   Potomek %d zostal zabity sygnalem %d\n", (int)w, WTERMSIG(status));
-        }
-        else
-        {
-            printf("[Rodzic]   Potomek %d zakonczyl sie w innym stanie\n", (int)w);
-        }
+      printf("[Rodzic]   Potomek %d zakonczyl sie w innym stanie\n", (int)w);
     }
+  }
 
-    // W obu procesach mozemy dalej wykonywac kod niezaleznie
-    printf("Koniec procesu pid=%d, counter=%d\n", (int)getpid(), counter);
-    return 0;
+  // W obu procesach mozemy dalej wykonywac kod niezaleznie
+  printf("Koniec procesu pid=%d, counter=%d\n", (int)getpid(), counter);
+  return 0;
 }
 // ...existing code...
