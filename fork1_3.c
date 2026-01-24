@@ -7,7 +7,7 @@
 
 int main(void)
 {
-    pid_t dzieci[3];
+    pid_t parent = getpid();
 
     printf("macierzysty proces PID: %d, PPID: %d, UID: %d, GID: %d\n",
            (int)getpid(), (int)getppid(), (int)getuid(), (int)getgid());
@@ -17,7 +17,7 @@ int main(void)
         pid_t pid = fork();
         if (pid < 0)
         {
-            perror("fork");
+            perror("blad fork-a");
             exit(1);
         }
 
@@ -27,17 +27,25 @@ int main(void)
             perror("execl");
             _exit(127);
         }
-
-        dzieci[i] = pid;
     }
 
-    printf("drzewo procesow:\n");
-    printf("%d\n", (int)getpid());
-    for (int i = 0; i < 3; i++)
-        printf("|- %d\n", (int)dzieci[i]);
+    if (getpid() == parent)
+    {
+        sleep(1); // dajemy czas na utworzenie procesów
 
-    int status;
-    pid_t dziecko_pid;
+        char cmd[256];
+        snprintf(cmd, sizeof cmd, "pstree -p %d", (int)parent);
+        printf("\nDrzewo procesu %d (pstree):\n", (int)parent);
+        system(cmd);
+    }
+    else
+    {
+        sleep(5); // procesy potomne czekają, aby prces macierzysty wyswietlil pstree
+        exit(0);
+    }
+
+    int status;        // status zakonczenia procesu potomnego
+    pid_t dziecko_pid; // PID procesu potomnego
 
     while ((dziecko_pid = wait(&status)) > 0)
     {
@@ -58,8 +66,8 @@ int main(void)
         }
     }
 
-    if (dziecko_pid < 0 && errno != ECHILD)
-        perror("wait");
+    if (dziecko_pid < 0 && errno != ECHILD) // Blad inny niz "brak procesow potomnych"
+        perror("wait");                     // wypisz blad
 
     printf("Rodzic: wszystkie procesy potomne zakonczone\n");
     return 0;
