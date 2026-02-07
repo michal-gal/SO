@@ -65,13 +65,14 @@ int main()
    }
 
    kluczs = ftok(".", 'C');                                // generowanie klucza do semafora
-   semID = semget(kluczs, 1, IPC_CREAT | IPC_EXCL | 0666); // utworzenie semafora
+   semID = semget(kluczs, 2, IPC_CREAT | IPC_EXCL | 0666); // utworzenie 2 semaforów
    if (semID == -1)
    {
       printf("blad semaforów \n");
       exit(1);
    }
    semctl(semID, 0, SETVAL, 1);
+   semctl(semID, 1, SETVAL, 1);
 
    komunikat.mtype = PUSTY; // ustawienie typu komunikatu na PUSTY
    //   komunikat.mvalue=0;

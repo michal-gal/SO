@@ -66,7 +66,7 @@ int main()
       exit(1);
    }
 
-   semID = semget(kluczs, 1, IPC_CREAT | 0666);
+   semID = semget(kluczs, 2, IPC_CREAT | 0666);
    if (semID == -1)
    {
       perror("semget");

@@ -40,7 +40,7 @@ int main()
 
    kluczm = ftok(".", 'B');                     // generowanie klucza do pamieci dzielonej
    kluczs = ftok(".", 'C');                     // generowanie klucza do semafora
-   semID = semget(kluczs, 1, IPC_CREAT | 0666); // uzyskanie dostepu do semafora
+   semID = semget(kluczs, 2, IPC_CREAT | 0666); // uzyskanie dostepu do semafora
    if (semID == -1)
    {
       perror("semget");
@@ -72,7 +72,7 @@ int main()
    struct sembuf operacje;
 
    // sekcja krytyczna: odczyt z bufora spod indeksu "odczyt"
-   operacje.sem_num = 0; // numer semafora
+   operacje.sem_num = 1; // numer semafora
    operacje.sem_flg = 0; // brak dodatkowych flag
 
    operacje.sem_op = -1;                 // operacja P (czekanie)

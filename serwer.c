@@ -39,12 +39,12 @@ int main(int argc, char *argv[])
     // tworzenie unikalnego klucza urzadzenia IPC dla kolejki komunikatow
     key = ftok(".", 98);
 
-    // Wielu serwerów: pierwszy tworzy kolejkę, reszta tylko się podłącza.
+    // Wiele serwerów: pierwszy tworzy kolejkę, reszta tylko się podłącza.
     is_owner = 0;
-    IDkolejki = msgget(key, IPC_CREAT | IPC_EXCL | 0666);
+    IDkolejki = msgget(key, IPC_CREAT | IPC_EXCL | 0666); // próba utworzenia kolejki
     if (IDkolejki == -1)
     {
-        if (errno == EEXIST)
+        if (errno == EEXIST) // kolejka już istnieje
         {
             IDkolejki = msgget(key, 0666);
         }
